@@ -11,6 +11,7 @@ const { handleAuthBridge, sendSolarPassportEmail, verifyToken: verifyBridgeToken
 const armosAdapter = require('./server/replicator/armos-adapter');
 const frontierOrchestrator = require('./server/replicator/frontier-orchestrator');
 const modelRouter = require('./server/replicator/model-router');
+const productionLedger = require('./server/production-ledger');
 
 // Persist the SAi UIM Ethical Layer's flat artifact_record_patch onto the artifacts row.
 // Stored under the existing lifelens_analysis jsonb column at key `uim` (rather than
@@ -3876,6 +3877,242 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  // ═══════════════════════════════════════════════════════════════════════
+  // ERA 22.x — LEDGER-FIRST PRODUCTIVE ARTIFACT BRIDGE
+  // Buy the intelligence once; produce new instances on demand. The TC-S
+  // double-entry ledger is the system of record for every asset transition.
+  // ═══════════════════════════════════════════════════════════════════════
+  if (pathname.startsWith('/api/production/')) {
+    const jsonOut = (code, obj) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
+    try {
+      if (!pool) return jsonOut(503, { error: 'Ledger unavailable' });
+      // All production operations are member operations — session required.
+      const sessionId = getCookie(req, 'tc_s_session');
+      const session = await getSession(sessionId);
+      if (!sessionId || !session || !session.userId) return jsonOut(401, { error: 'Authentication required' });
+      const userId = session.userId;
+
+      // POST /api/production/request { artifactId, requestedOutput?, quantity?, parameters? }
+      if (pathname === '/api/production/request' && req.method === 'POST') {
+        const body = await parseBody(req) || {};
+        if (!body.artifactId) return jsonOut(400, { error: 'artifactId is required' });
+        // VERIFY ROOT ASSET / MEMBER OWNERSHIP / PRODUCTION RIGHTS / ASSET STATUS
+        // from the ledger — never from browser or agent state.
+        const own = await productionLedger.verifyOwnership(pool, userId, body.artifactId);
+        if (!own.ok) return jsonOut(own.code, { error: own.error });
+        const { requestId, request, quote } = await productionLedger.createRequest(pool, {
+          userId, root: own.root, copy: own.copy, via: own.via,
+          requestedOutput: body.requestedOutput, quantity: body.quantity, parameters: body.parameters
+        });
+        console.log(`🏭 [Production] Request ${requestId} created for artifact ${own.root.id} (${request.capability}) by member ${userId}`);
+        return jsonOut(201, {
+          success: true, request_id: requestId, status: 'PRODUCTION_QUOTE_ISSUED',
+          capability: request.capability, capability_reason: request.capability_reason,
+          ownership_via: own.via,
+          pricing: {
+            root_artifact: { label: 'ROOT ARTIFACT', owned: true, repurchase_solar: 0, display: 'Already owned — S0.0000' },
+            production: { label: 'PRODUCTION', solar: quote.production_solar },
+            sealing_delivery: { label: 'SEAL + DELIVERY', solar: quote.sealing_delivery_solar, note: 'Separate quote — charged only when delivery is approved' }
+          },
+          quote,
+          note: 'No Solar was charged. Production is charged only at PRODUCTION_STARTED after your approval.'
+        });
+      }
+
+      const prodMatch = pathname.match(/^\/api\/production\/(TCSPR-[A-F0-9]+)(\/(approve|delivery\/quote|delivery\/approve|output))?$/);
+      if (prodMatch) {
+        const requestId = prodMatch[1];
+        const sub = prodMatch[3];
+        let state = await productionLedger.getRequest(pool, requestId);
+        if (!state) return jsonOut(404, { error: 'Unknown production request (not in ledger — it did not happen).' });
+        if (String(state.request.owner_id) !== String(userId)) return jsonOut(403, { error: 'This production request belongs to another member.' });
+
+        // GET status — replays ledger; retries any pending reconciliation first.
+        if (!sub && req.method === 'GET') {
+          await productionLedger.retryReconciliation(pool, requestId);
+          state = await productionLedger.getRequest(pool, requestId);
+          // Restart-safe digital reconciliation: ledger says the output exists
+          // but PRODUCTION_COMPLETED never committed (in-memory queue lost).
+          if (state.needs_completion_commit && !state.mission) {
+            await productionLedger.commitWithReconciliation(pool, requestId, userId, 'PRODUCTION_COMPLETED',
+              { provider: 'TC-S_DIGITAL_PRODUCTION', digital_output_id: state.output && state.output.asset_id, recovered: true },
+              'Ledger-derived completion recovery');
+            state = await productionLedger.getRequest(pool, requestId);
+          }
+          // Physical route: reflect replicator mission progress + reconcile completion.
+          if (state.mission && state.mission.mission_id && ['IN_PRODUCTION', 'COMPLETED_AWAITING_LEDGER_RECONCILIATION'].includes(state.status)) {
+            const m = armosAdapter.getMission(state.mission.mission_id);
+            if (!m && state.status === 'IN_PRODUCTION') {
+              // Mission record lost (server restart before completion): the
+              // charged execution cannot be recovered — refund per policy.
+              const refund = await productionLedger.refundProduction(pool, requestId, state, userId, 'Replicator mission record lost (server restart before completion)');
+              state = await productionLedger.getRequest(pool, requestId);
+              state.refund_result = refund;
+            }
+            if (m) {
+              if (m.status === 'EXECUTING' || m.status === 'REPLICATION_COMPLETE') await armosAdapter.getMissionStatus(m.mission_id);
+              state.mission_status = m.status;
+              if (m.status === 'REPLICATION_COMPLETE') {
+                await productionLedger.commitWithReconciliation(pool, requestId, userId, 'PRODUCTION_COMPLETED',
+                  { provider: 'TC-S.REPLICATOR.ARMOS', mission_id: m.mission_id, execution_source: m.result && m.result.execution_source },
+                  'Provider reported completion — ledger commit');
+                state = await productionLedger.getRequest(pool, requestId);
+                state.mission_status = m.status;
+              } else if (m.status === 'ORCHESTRATION_FAILED' || m.status === 'ORCHESTRATION_INCOMPLETE' || m.status === 'CANCELLED') {
+                const refund = await productionLedger.refundProduction(pool, requestId, state, userId, `Replicator mission ${m.status}`);
+                state = await productionLedger.getRequest(pool, requestId);
+                state.mission_status = m.status;
+                state.refund_result = refund;
+              }
+            }
+          }
+          return jsonOut(200, { success: true, ...state, reconciliation_pending: productionLedger.pendingReconciliation.has(requestId) });
+        }
+
+        // POST approve — atomic idempotent charge at PRODUCTION_STARTED, then execute.
+        if (sub === 'approve' && req.method === 'POST') {
+          const body = await parseBody(req) || {};
+          if (['PRODUCTION_COMPLETED', 'PRODUCTION_FAILED', 'DIGITALLY_DELIVERED', 'SHIPPED', 'DELIVERED'].includes(state.status)) {
+            return jsonOut(400, { error: `Request is already ${state.status}.` });
+          }
+          const charge = await productionLedger.chargeProduction(pool, requestId, state, userId, getOrCreateFoundationMember);
+          if (charge.insufficient) return jsonOut(400, { error: 'Insufficient Solar balance for production', required: charge.required, available: charge.available });
+          if (charge.alreadyCharged) {
+            state = await productionLedger.getRequest(pool, requestId);
+            return jsonOut(200, { success: true, idempotent: true, message: 'Production was already charged for this request — no double charge.', transaction_id: charge.transactionId, status: state.status });
+          }
+          console.log(`🏭 [Production] ${requestId} charged ${charge.amount} Solar (tx ${charge.transactionId}) — instance ${charge.instanceId}`);
+
+          // Route execution — forbidden unless the ledger commit above succeeded.
+          const cap = state.request.capability;
+          state = await productionLedger.getRequest(pool, requestId);
+          if (cap === 'PHYSICAL_FABRICATION' || cap === 'ROBOTIC_ASSEMBLY') {
+            // KID SOL → OpenAI frontier orchestration → ArmOS (Gemini 3).
+            // Physical fabrication keeps the human approval gate: the mission
+            // stops at WAITING_APPROVAL; execution stays labeled SIMULATION.
+            const missionIntent = (state.request.parameters && String(state.request.parameters.intent || '').trim())
+              || `Build a physical instance of ${state.request.root_title}`;
+            const mission = armosAdapter.createMissionRecord(missionIntent.slice(0, 300));
+            await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'EXECUTION_ROUTED', userId,
+              { mission: { mission_id: mission.mission_id }, route: 'TC-S.REPLICATOR.ARMOS', execution_mode: 'SIMULATION' }, `Routed to Replicator mission ${mission.mission_id}`);
+            frontierOrchestrator.orchestrateMission(mission, null).catch(err => {
+              console.error(`[Production] Mission ${mission.mission_id} orchestration failed:`, err.message);
+              mission.status = 'ORCHESTRATION_FAILED';
+              mission.error = err.message;
+              mission.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
+            });
+            return jsonOut(200, {
+              success: true, status: 'IN_PRODUCTION', route: 'TC-S.REPLICATOR.ARMOS',
+              transaction_id: charge.transactionId, instance_id: charge.instanceId,
+              amount_charged: charge.amount, new_balance: charge.newBalance,
+              mission_id: mission.mission_id, mission_control_token: mission.control_token,
+              approval_gate: 'Physical fabrication requires explicit human approval at WAITING_APPROVAL before execution (simulation) begins.'
+            });
+          }
+
+          // Digital routes: produce a ledger-backed DIGITAL_OUTPUT asset.
+          try {
+            const outputId = productionLedger.newId('TCS-DIGITAL');
+            let outputAsset = {
+              asset_id: outputId, asset_class: 'DIGITAL_OUTPUT', status: 'RENDERED',
+              root_artifact_id: state.request.root_artifact_id,
+              production_instance_id: charge.instanceId,
+              production_request_id: requestId, production_transaction_id: charge.transactionId,
+              capability: cap, created_at: new Date().toISOString()
+            };
+            if (cap === '3D_PRINT' || cap === '3D_MODEL') {
+              const artifact3dService = require('./server/artifact3d-service.js');
+              const templates = artifact3dService.getTemplates();
+              const hay = `${state.request.root_title} ${state.request.requested_output}`.toLowerCase();
+              const tpl = templates.find(t => t.tags.some(tag => hay.includes(tag))) || templates.find(t => t.id === 'keychain') || templates[0];
+              const gen = artifact3dService.generateArtifact3d(tpl.id, state.request.parameters || {});
+              outputAsset.render = {
+                kind: 'STL', template_id: tpl.id, params: gen.params,
+                stl_hash: gen.stlHash, print_guide_hash: gen.printGuideHash,
+                triangle_count: gen.triangleCount, bounding_box: gen.boundingBox
+              };
+            } else {
+              outputAsset.render = { kind: 'PRODUCTION_MANIFEST', note: `Digital ${cap} production instance rendered from root artifact intelligence.` };
+            }
+            await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'DIGITAL_OUTPUT_CREATED', userId, { asset: outputAsset }, `Digital output ${outputId}`);
+            const simulateFailure = body.simulate_ledger_failure === true;
+            const commit = await productionLedger.commitWithReconciliation(pool, requestId, userId, 'PRODUCTION_COMPLETED',
+              { provider: 'TC-S_DIGITAL_PRODUCTION', digital_output_id: outputId }, 'Digital production completed — ledger commit', simulateFailure);
+            state = await productionLedger.getRequest(pool, requestId);
+            return jsonOut(200, {
+              success: true,
+              status: commit.committed ? 'PRODUCTION_COMPLETED' : 'COMPLETED_AWAITING_LEDGER_RECONCILIATION',
+              transaction_id: charge.transactionId, instance_id: charge.instanceId,
+              output_id: outputId, amount_charged: charge.amount, new_balance: charge.newBalance,
+              reconciliation_pending: !commit.committed,
+              note: commit.committed ? 'Committed to the TC-S ledger.' : 'Provider finished but the ledger commit failed — completion is NOT authoritative until reconciliation commits. Poll status to retry.'
+            });
+          } catch (execErr) {
+            console.error(`[Production] Execution failed after charge for ${requestId}:`, execErr.message);
+            const refund = await productionLedger.refundProduction(pool, requestId, state, userId, execErr.message);
+            return jsonOut(502, { error: `Production execution failed: ${execErr.message}`, refund });
+          }
+        }
+
+        // POST delivery/quote — no wallet movement.
+        if (sub === 'delivery/quote' && req.method === 'POST') {
+          if (state.status !== 'PRODUCTION_COMPLETED' && state.status !== 'DELIVERY_QUOTE_ISSUED') {
+            return jsonOut(400, { error: `Delivery can be quoted only after PRODUCTION_COMPLETED (current: ${state.status}).` });
+          }
+          const quote = { sealing_delivery_solar: state.quote.sealing_delivery_solar, currency: 'SOLAR' };
+          await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'DELIVERY_QUOTE_ISSUED', userId, { quote, no_wallet_movement: true }, `Sealing + delivery quote: ${quote.sealing_delivery_solar} Solar`);
+          return jsonOut(200, { success: true, status: 'DELIVERY_QUOTE_ISSUED', quote, note: 'No Solar charged at quote time.' });
+        }
+
+        // POST delivery/approve — atomic idempotent sealing/delivery charge.
+        if (sub === 'delivery/approve' && req.method === 'POST') {
+          if (!['PRODUCTION_COMPLETED', 'DELIVERY_QUOTE_ISSUED', 'SEALED', 'DIGITALLY_DELIVERED', 'SHIPPED', 'DELIVERED'].includes(state.status)) {
+            return jsonOut(400, { error: `Delivery approval requires a completed production (current: ${state.status}).` });
+          }
+          const charge = await productionLedger.chargeDelivery(pool, requestId, state, userId, getOrCreateFoundationMember);
+          if (charge.insufficient) return jsonOut(400, { error: 'Insufficient Solar balance for sealing + delivery', required: charge.required, available: charge.available });
+          if (charge.alreadyCharged) {
+            state = await productionLedger.getRequest(pool, requestId);
+            return jsonOut(200, { success: true, idempotent: true, message: 'Sealing + delivery already charged — no double charge.', status: state.status });
+          }
+          console.log(`📦 [Production] ${requestId} sealing+delivery charged ${charge.amount} Solar → ${charge.status}`);
+          return jsonOut(200, { success: true, status: charge.status, transaction_id: charge.transactionId, package_id: charge.packageId, amount_charged: charge.amount, new_balance: charge.newBalance });
+        }
+
+        // GET output — regenerate the sealed digital output deterministically from the ledger record.
+        if (sub === 'output' && req.method === 'GET') {
+          if (!state.output) return jsonOut(404, { error: 'No digital output asset in the ledger for this request.' });
+          if (!['DIGITALLY_DELIVERED', 'DELIVERED'].includes(state.status)) {
+            return jsonOut(403, { error: `Output download requires delivery (current: ${state.status}). Approve sealing + delivery first.` });
+          }
+          if (state.output.render && state.output.render.kind === 'STL') {
+            const artifact3dService = require('./server/artifact3d-service.js');
+            const gen = artifact3dService.generateArtifact3d(state.output.render.template_id, state.output.render.params);
+            if (gen.stlHash !== state.output.render.stl_hash) return jsonOut(500, { error: 'Regenerated STL hash does not match the ledger-committed geometry hash.' });
+            res.writeHead(200, { 'Content-Type': 'model/stl', 'Content-Disposition': `attachment; filename="${state.output.asset_id}.stl"` });
+            return res.end(gen.stlBuffer);
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Disposition': `attachment; filename="${state.output.asset_id}-manifest.json"` });
+          return res.end(JSON.stringify({ delivery_package: state.delivery_package, digital_output: state.output, instance: state.instance, request: state.request, ledger_timeline: state.timeline }, null, 2));
+        }
+      }
+
+      // GET /api/production/artifact/:artifactId — lineage/instances for My Library.
+      const artMatch = pathname.match(/^\/api\/production\/artifact\/([0-9a-f-]{8,64})$/i);
+      if (artMatch && req.method === 'GET') {
+        const requests = await productionLedger.listRequestsForArtifact(pool, userId, artMatch[1]);
+        return jsonOut(200, { success: true, artifact_id: artMatch[1], requests });
+      }
+
+      return jsonOut(404, { error: 'Unknown production endpoint' });
+    } catch (error) {
+      console.error('Production bridge error:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: `Production request failed: ${error.message}` }));
+    }
+    return;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // ERA 22.1 — TC-S REPLICATOR ORCHESTRATION API
   // Marketplace → OpenAI Frontier Orchestrator → ArmOS Replicator → Gemini 3

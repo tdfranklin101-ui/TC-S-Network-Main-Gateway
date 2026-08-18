@@ -502,6 +502,34 @@
       opacity: 0.7;
       pointer-events: none;
     }
+
+    /* ── Ledger-first production (buy once, produce on demand) ── */
+    .produce-btn {
+      width: 100%;
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid rgba(255, 184, 0, 0.45);
+      border-radius: 8px;
+      background: rgba(255, 184, 0, 0.10);
+      color: #ffb800;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .produce-btn:hover { background: rgba(255, 184, 0, 0.2); }
+    .produce-instances { font-size: 0.75rem; color: #8a93a6; margin-top: 6px; text-align: center; }
+    .produce-box { max-width: 460px; text-align: left; }
+    .price-panel { border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; margin: 14px 0; overflow: hidden; }
+    .price-row { display: flex; justify-content: space-between; padding: 10px 14px; font-size: 0.88rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .price-row:last-child { border-bottom: none; }
+    .price-row .plabel { color: #8a93a6; letter-spacing: 0.04em; }
+    .price-row .pval { font-weight: 600; }
+    .price-row .owned { color: #38d39f; }
+    .prod-status { font-size: 0.85rem; margin: 10px 0; padding: 10px 12px; border-radius: 8px; background: rgba(255,255,255,0.05); }
+    .prod-status.ok { color: #38d39f; }
+    .prod-status.warn { color: #ffb800; }
+    .prod-status.err { color: #ff6b6b; }
+    .prod-timeline { font-size: 0.72rem; color: #8a93a6; max-height: 120px; overflow-y: auto; margin-top: 8px; line-height: 1.7; }
   </style>
 </head>
 <body>
@@ -525,6 +553,20 @@
       <div class="loading" id="loading-state">
         <div class="spinner"></div>
         <div class="loading-text">Loading your library...</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="produce-modal">
+    <div class="modal-box produce-box">
+      <div class="modal-title">&#x1F3ED; Produce New Instance</div>
+      <div class="modal-artifact-name" id="produce-artifact-name"></div>
+      <div class="price-panel" id="produce-price-panel"></div>
+      <div class="prod-status" id="produce-status" style="display:none;"></div>
+      <div class="prod-timeline" id="produce-timeline"></div>
+      <div class="modal-actions">
+        <button class="modal-cancel" onclick="closeProduce()">Close</button>
+        <button class="modal-confirm" id="produce-action-btn" onclick="produceAction()">Get Quote</button>
       </div>
     </div>
   </div>
@@ -672,6 +714,202 @@
       if (e.target === this) cancelDownload();
     });
 
+    // ── Ledger-first production: buy once, produce on demand ──────────────
+    // Ownership, pricing, and every state transition below come from the
+    // TC-S ledger (server-side). The browser never asserts ownership.
+    var prod = { artifactId: null, title: null, requestId: null, phase: 'idle', quote: null, pollTimer: null };
+
+    function fmtS(n) { return 'S' + (parseFloat(n) || 0).toFixed(4); }
+
+    function pricePanel(rows) {
+      return rows.map(function(r) {
+        return '<div class="price-row"><span class="plabel">' + r[0] + '</span><span class="pval ' + (r[2] || '') + '">' + r[1] + '</span></div>';
+      }).join('');
+    }
+
+    function setProdStatus(msg, cls) {
+      var el = document.getElementById('produce-status');
+      el.style.display = 'block';
+      el.className = 'prod-status ' + (cls || '');
+      el.textContent = msg;
+    }
+
+    function setProdTimeline(timeline) {
+      document.getElementById('produce-timeline').innerHTML = (timeline || []).map(function(t) {
+        return '&#x2713; ' + escapeHtml(t.event);
+      }).join('<br>');
+    }
+
+    function openProduce(artifactId, title) {
+      prod = { artifactId: artifactId, title: title, requestId: null, phase: 'idle', quote: null, pollTimer: null };
+      document.getElementById('produce-artifact-name').textContent = title;
+      document.getElementById('produce-price-panel').innerHTML = pricePanel([
+        ['ROOT ARTIFACT', 'Already owned — S0.0000', 'owned'],
+        ['PRODUCTION', 'Quote pending'],
+        ['SEAL + DELIVERY', 'Not selected']
+      ]);
+      document.getElementById('produce-status').style.display = 'none';
+      document.getElementById('produce-timeline').innerHTML = '';
+      var btn = document.getElementById('produce-action-btn');
+      btn.textContent = 'Get Quote';
+      btn.disabled = false;
+      document.getElementById('produce-modal').classList.add('active');
+    }
+
+    function closeProduce() {
+      if (prod.pollTimer) clearTimeout(prod.pollTimer);
+      document.getElementById('produce-modal').classList.remove('active');
+      loadProduceCounts();
+    }
+    document.getElementById('produce-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeProduce();
+    });
+
+    async function produceAction() {
+      var btn = document.getElementById('produce-action-btn');
+      try {
+        btn.disabled = true;
+        if (prod.phase === 'idle') {
+          setProdStatus('Verifying ledger ownership and requesting quote (no charge)...', '');
+          var res = await fetch('/api/production/request', {
+            method: 'POST', credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ artifactId: prod.artifactId })
+          });
+          var data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Quote failed');
+          prod.requestId = data.request_id;
+          prod.quote = data.quote;
+          prod.phase = 'quoted';
+          document.getElementById('produce-price-panel').innerHTML = pricePanel([
+            ['ROOT ARTIFACT', 'Already owned — S0.0000', 'owned'],
+            ['PRODUCTION', fmtS(data.quote.production_solar)],
+            ['SEAL + DELIVERY', fmtS(data.quote.sealing_delivery_solar) + ' (separate)'],
+            ['ROOT ARTIFACT REPURCHASE', 'S0.0000', 'owned']
+          ]);
+          setProdStatus('Quote issued via ledger — no Solar charged. Route: ' + data.capability + '. Approve to start production.', 'ok');
+          btn.textContent = 'Approve — Charge ' + fmtS(data.quote.production_solar);
+          btn.disabled = false;
+        } else if (prod.phase === 'quoted') {
+          setProdStatus('Committing production charge to the ledger...', '');
+          var res2 = await fetch('/api/production/' + prod.requestId + '/approve', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+          var d2 = await res2.json();
+          if (!res2.ok) throw new Error(d2.error || 'Approval failed');
+          if (d2.new_balance !== undefined) document.getElementById('solar-balance').textContent = formatPrice(d2.new_balance) + ' Solar';
+          if (d2.status === 'PRODUCTION_COMPLETED') {
+            prod.phase = 'completed';
+            setProdStatus('Production complete and committed to the ledger. Approve sealing + delivery to receive the output.', 'ok');
+            btn.textContent = 'Seal + Deliver — ' + fmtS(prod.quote.sealing_delivery_solar);
+            btn.disabled = false;
+            refreshProdState();
+          } else if (d2.status === 'COMPLETED_AWAITING_LEDGER_RECONCILIATION') {
+            prod.phase = 'reconciling';
+            setProdStatus('Provider finished, but the ledger commit is pending — completion is not authoritative yet. Retrying...', 'warn');
+            pollProduction();
+          } else {
+            prod.phase = 'producing';
+            prod.missionId = d2.mission_id || null;
+            prod.missionToken = d2.mission_control_token || null;
+            var gate = d2.approval_gate ? ' ' + d2.approval_gate : '';
+            setProdStatus('Production started (charged ' + fmtS(d2.amount_charged) + ').' + gate, 'ok');
+            btn.textContent = 'Producing...';
+            pollProduction();
+          }
+        } else if (prod.phase === 'completed') {
+          setProdStatus('Committing sealing + delivery charge to the ledger...', '');
+          var res3 = await fetch('/api/production/' + prod.requestId + '/delivery/approve', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+          var d3 = await res3.json();
+          if (!res3.ok) throw new Error(d3.error || 'Delivery failed');
+          if (d3.new_balance !== undefined) document.getElementById('solar-balance').textContent = formatPrice(d3.new_balance) + ' Solar';
+          prod.phase = 'delivered';
+          setProdStatus('Sealed and delivered (' + d3.status + '). Download your instance below, or make another at root cost S0.0000.', 'ok');
+          btn.textContent = 'Make Another — Root S0.0000';
+          btn.disabled = false;
+          var dl = document.createElement('a');
+          dl.href = '/api/production/' + prod.requestId + '/output';
+          dl.click();
+          refreshProdState();
+        } else if (prod.phase === 'awaiting_gate') {
+          // Human approval gate for physical fabrication (execution stays simulation-labeled).
+          setProdStatus('Approving fabrication mission (human gate)...', '');
+          var res4 = await fetch('/api/replicator/mission/' + prod.missionId + '/approve', { method: 'POST', headers: { 'X-Mission-Token': prod.missionToken } });
+          var d4 = await res4.json();
+          if (!res4.ok) throw new Error(d4.error || 'Mission approval failed');
+          prod.phase = 'producing';
+          setProdStatus('Fabrication approved — executing (simulation-labeled)...', 'ok');
+          btn.textContent = 'Producing...';
+          pollProduction();
+        } else if (prod.phase === 'delivered') {
+          // MAKE ANOTHER — ledger re-verifies ownership; root repurchase S0.0000.
+          prod.phase = 'idle'; prod.requestId = null;
+          openProduce(prod.artifactId, prod.title);
+          produceAction();
+        }
+      } catch (e) {
+        setProdStatus(e.message, 'err');
+        btn.disabled = false;
+      }
+    }
+
+    async function refreshProdState() {
+      if (!prod.requestId) return null;
+      var res = await fetch('/api/production/' + prod.requestId, { credentials: 'include' });
+      var d = await res.json();
+      if (res.ok) setProdTimeline(d.timeline);
+      return d;
+    }
+
+    async function pollProduction() {
+      if (prod.pollTimer) clearTimeout(prod.pollTimer);
+      var d = await refreshProdState();
+      if (!d) return;
+      var btn = document.getElementById('produce-action-btn');
+      if (d.status === 'PRODUCTION_COMPLETED') {
+        prod.phase = 'completed';
+        setProdStatus('Production complete — ledger committed. Approve sealing + delivery.', 'ok');
+        btn.textContent = 'Seal + Deliver — ' + fmtS(prod.quote.sealing_delivery_solar);
+        btn.disabled = false;
+        return;
+      }
+      if (d.status === 'COMPLETED_AWAITING_LEDGER_RECONCILIATION') {
+        setProdStatus('Provider reports completion, but the ledger has not committed — not authoritative yet. Retrying reconciliation...', 'warn');
+      } else if (d.status === 'PRODUCTION_FAILED') {
+        setProdStatus('Production failed after charge — Solar refunded via reversal transaction.', 'err');
+        btn.textContent = 'Close';
+        btn.disabled = false;
+        prod.phase = 'idle';
+        return;
+      } else if (d.mission_status === 'WAITING_APPROVAL') {
+        if (prod.missionId && prod.missionToken) {
+          prod.phase = 'awaiting_gate';
+          setProdStatus('Physical fabrication is waiting for YOUR approval (human verification gate). Execution remains simulation-labeled.', 'warn');
+          btn.textContent = 'Approve Fabrication (Human Gate)';
+          btn.disabled = false;
+          return;
+        }
+        setProdStatus('Physical fabrication is waiting for human approval (real-equipment verification gate). Execution remains simulation-labeled.', 'warn');
+      } else {
+        setProdStatus('In production (' + (d.mission_status || d.status) + ')...', '');
+      }
+      prod.pollTimer = setTimeout(pollProduction, 3000);
+    }
+
+    async function loadProduceCounts() {
+      var els = document.querySelectorAll('.produce-instances');
+      for (var i = 0; i < els.length; i++) {
+        var id = els[i].id.replace('prod-count-', '');
+        try {
+          var res = await fetch('/api/production/artifact/' + id, { credentials: 'include' });
+          if (!res.ok) continue;
+          var d = await res.json();
+          var done = (d.requests || []).filter(function(r) { return ['PRODUCTION_COMPLETED', 'DIGITALLY_DELIVERED', 'SHIPPED', 'DELIVERED', 'SEALED'].indexOf(r.status) >= 0; }).length;
+          if (d.requests && d.requests.length > 0) {
+            els[i].textContent = d.requests.length + ' production request(s) · ' + done + ' produced — ledger-backed';
+          }
+        } catch (e) { /* non-fatal */ }
+      }
+    }
+
     function escapeHtml(str) {
       if (!str) return '';
       var div = document.createElement('div');
@@ -716,6 +954,10 @@
             '<button class="download-btn" onclick="requestDownload(\'' + artifactId + '\', \'' + title.replace(/'/g, "\\'") + '\', \'' + category.replace(/'/g, "\\'") + '\', \'' + fileType.replace(/'/g, "\\'") + '\')">' +
               '&#x2B07; Download' +
             '</button>' +
+            '<button class="produce-btn" onclick="openProduce(\'' + artifactId + '\', \'' + title.replace(/'/g, "\\'") + '\')">' +
+              '&#x1F3ED; Produce' +
+            '</button>' +
+            '<div class="produce-instances" id="prod-count-' + artifactId + '"></div>' +
           '</div>';
       }
       gridHtml += '</div>';
@@ -740,6 +982,7 @@
           return;
         }
         renderLibrary(artifacts);
+        loadProduceCounts();
       } catch (e) {
         showError('Unable to load your library. Please try again.');
       }
