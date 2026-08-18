@@ -754,6 +754,36 @@
       btn.textContent = 'Get Quote';
       btn.disabled = false;
       document.getElementById('produce-modal').classList.add('active');
+      resumeInFlight(artifactId);
+    }
+
+    // After a page reload, resume any in-flight ledger request for this
+    // artifact instead of starting a duplicate one.
+    async function resumeInFlight(artifactId) {
+      try {
+        var res = await fetch('/api/production/artifact/' + artifactId, { credentials: 'include' });
+        if (!res.ok) return;
+        var d = await res.json();
+        var open = (d.requests || []).filter(function(r) {
+          return ['IN_PRODUCTION', 'COMPLETED_AWAITING_LEDGER_RECONCILIATION', 'PRODUCTION_COMPLETED', 'DELIVERY_QUOTE_ISSUED'].indexOf(r.status) >= 0;
+        });
+        if (open.length === 0 || prod.artifactId !== artifactId || prod.requestId) return;
+        var r0 = open[open.length - 1];
+        prod.requestId = r0.request_id;
+        prod.quote = r0.quote;
+        var btn = document.getElementById('produce-action-btn');
+        if (r0.status === 'PRODUCTION_COMPLETED' || r0.status === 'DELIVERY_QUOTE_ISSUED') {
+          prod.phase = 'completed';
+          setProdStatus('Resumed request ' + r0.request_id + ' — production complete. Approve sealing + delivery.', 'ok');
+          btn.textContent = 'Seal + Deliver — ' + fmtS(r0.quote.sealing_delivery_solar);
+        } else {
+          prod.phase = 'producing';
+          setProdStatus('Resumed in-flight request ' + r0.request_id + ' from the ledger...', '');
+          btn.textContent = 'Producing...';
+          btn.disabled = true;
+          pollProduction();
+        }
+      } catch (e) { /* non-fatal */ }
     }
 
     function closeProduce() {
@@ -830,9 +860,11 @@
           dl.click();
           refreshProdState();
         } else if (prod.phase === 'awaiting_gate') {
-          // Human approval gate for physical fabrication (execution stays simulation-labeled).
+          // Human approval gate for physical fabrication (execution stays
+          // simulation-labeled). Authorized by request ownership server-side,
+          // so it works even after a page reload.
           setProdStatus('Approving fabrication mission (human gate)...', '');
-          var res4 = await fetch('/api/replicator/mission/' + prod.missionId + '/approve', { method: 'POST', headers: { 'X-Mission-Token': prod.missionToken } });
+          var res4 = await fetch('/api/production/' + prod.requestId + '/gate/approve', { method: 'POST', credentials: 'include' });
           var d4 = await res4.json();
           if (!res4.ok) throw new Error(d4.error || 'Mission approval failed');
           prod.phase = 'producing';
@@ -880,14 +912,11 @@
         prod.phase = 'idle';
         return;
       } else if (d.mission_status === 'WAITING_APPROVAL') {
-        if (prod.missionId && prod.missionToken) {
-          prod.phase = 'awaiting_gate';
-          setProdStatus('Physical fabrication is waiting for YOUR approval (human verification gate). Execution remains simulation-labeled.', 'warn');
-          btn.textContent = 'Approve Fabrication (Human Gate)';
-          btn.disabled = false;
-          return;
-        }
-        setProdStatus('Physical fabrication is waiting for human approval (real-equipment verification gate). Execution remains simulation-labeled.', 'warn');
+        prod.phase = 'awaiting_gate';
+        setProdStatus('Physical fabrication is waiting for YOUR approval (human verification gate). Execution remains simulation-labeled.', 'warn');
+        btn.textContent = 'Approve Fabrication (Human Gate)';
+        btn.disabled = false;
+        return;
       } else {
         setProdStatus('In production (' + (d.mission_status || d.status) + ')...', '');
       }

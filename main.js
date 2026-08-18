@@ -3919,7 +3919,7 @@ const server = http.createServer(async (req, res) => {
         });
       }
 
-      const prodMatch = pathname.match(/^\/api\/production\/(TCSPR-[A-F0-9]+)(\/(approve|delivery\/quote|delivery\/approve|output))?$/);
+      const prodMatch = pathname.match(/^\/api\/production\/(TCSPR-[A-F0-9]+)(\/(approve|gate\/approve|delivery\/quote|delivery\/approve|output))?$/);
       if (prodMatch) {
         const requestId = prodMatch[1];
         const sub = prodMatch[3];
@@ -4075,6 +4075,20 @@ const server = http.createServer(async (req, res) => {
             const refund = await productionLedger.refundProduction(pool, requestId, state, userId, execErr.message);
             return jsonOut(502, { error: `Production execution failed: ${execErr.message}`, refund });
           }
+        }
+
+        // POST gate/approve — human approval gate for physical fabrication,
+        // authorized by production-request ownership (verified above) instead
+        // of the raw mission control token, so the gate survives page reloads.
+        if (sub === 'gate/approve' && req.method === 'POST') {
+          if (!state.mission || !state.mission.mission_id) return jsonOut(400, { error: 'This production request has no fabrication mission to approve.' });
+          const m = armosAdapter.getMission(state.mission.mission_id);
+          if (!m) return jsonOut(409, { error: 'Fabrication mission record is unavailable (server restart) — the request will be remediated with a refund on the next status read.' });
+          if (m.status !== 'WAITING_APPROVAL') return jsonOut(400, { error: `Mission is ${m.status}, not WAITING_APPROVAL.` });
+          const result = await armosAdapter.executeMission(m.mission_id);
+          await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'FABRICATION_GATE_APPROVED', userId,
+            { mission_id: m.mission_id, approved_by: String(userId) }, 'Human approval gate passed (owner-authorized)').catch(() => {});
+          return jsonOut(200, { success: true, mission_id: m.mission_id, mission_status: result.status || 'EXECUTING' });
         }
 
         // POST delivery/quote — no wallet movement.
