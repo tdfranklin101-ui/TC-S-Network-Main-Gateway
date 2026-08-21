@@ -29,7 +29,9 @@ class SEOGenerator {
         homepage: await this.generateHomepageSEO(marketData, positioning),
         marketplace: await this.generateMarketplaceSEO(marketData, positioning),
         creator: await this.generateCreatorSEO(marketData, positioning),
-        wallet: await this.generateWalletSEO(marketData, positioning)
+        wallet: await this.generateWalletSEO(marketData, positioning),
+        replicator: await this.generateReplicatorSEO(marketData, positioning),
+        myLibrary: await this.generateMyLibrarySEO(marketData, positioning)
       };
 
       // Validate all content for authenticity
@@ -73,7 +75,7 @@ class SEOGenerator {
         '3D printer code marketplace',
         'AI replicator real objects',
         'text to STL generator',
-        'renewable energy marketplace 2025',
+        'renewable energy marketplace 2026',
         `${currentTrends.aiDemand}GW AI energy demand`,
         'Solar currency blockchain',
         'digital energy trading platform',
@@ -83,6 +85,16 @@ class SEOGenerator {
         'renewable energy monetization',
         'AI data center energy solutions',
         `${marketData.renewableMarketGrowth.value}% renewable growth rate`,
+        'Era 22.1 Frontier Orchestration',
+        'ArmOS Replicator physical fabrication',
+        'OpenAI frontier orchestrator',
+        'Gemini 3 Creation Capsule engineering',
+        'physical artifact production AI',
+        'describe it fabricate it',
+        'buy once produce on demand',
+        'ledger-first production marketplace',
+        'factory printer network TC-S',
+        'physical production mission ArmOS',
         'Power Twin energy calculator',
         'Open Silicon Stack simulator',
         'VexRiscv RISC-V processor',
@@ -166,9 +178,16 @@ class SEOGenerator {
         "knowsAbout": [
           "Solar Replicator — Produce with AI (text to 3D-printable code)",
           "AI-Generated 3D Printer Code for Physical Fabrication",
+          "Era 22.1 Frontier Orchestration — OpenAI + ArmOS + Gemini 3",
+          "ArmOS Replicator — Agentic Physical Fabrication Nodes",
+          "Creation Capsule Engineering via Gemini 3 Specialist Inference",
+          "Ledger-First Physical Production — Buy Once, Produce On Demand",
+          "Factory Printer Network — Event-Based 3D Printer Registration",
+          "Human Approval Gate for Physical Fabrication Missions",
+          "Physical Production Mission Persistence and Recovery",
           "Renewable Energy Trading",
           "AI Data Center Energy Solutions",
-          "Sustainable Digital Economy", 
+          "Sustainable Digital Economy",
           "Energy-Backed Currency Systems",
           "Creator Economy Monetization",
           "Universal Basic Income Implementation",
@@ -327,6 +346,108 @@ class SEOGenerator {
   }
 
   /**
+   * Generate Solar Replicator / Era 22.1 page SEO
+   */
+  async generateReplicatorSEO(marketData, positioning) {
+    return {
+      title: `Solar Replicator — Describe It, Fabricate It | Era 22.1 Frontier Orchestration | TC-S Network`,
+
+      description: `Describe any object in plain language and TC-S Network engineers a real, 3D-printable Creation Capsule through Era 22.1 Frontier Orchestration. OpenAI acts as the network-level reasoning orchestrator; ArmOS Replicator nodes provide fabrication capability; Gemini 3 specialist inference engineers every part. Human approval is required before any fabrication begins. Every mission is priced in Solar (1 Solar = ${marketData.solarStandard.value} kWh).`,
+
+      keywords: [
+        'Solar Replicator',
+        'describe it fabricate it',
+        'Era 22.1 Frontier Orchestration',
+        'ArmOS Replicator nodes',
+        'OpenAI physical production orchestrator',
+        'Gemini 3 Creation Capsule engineering',
+        'physical artifact from text description',
+        'human approval fabrication gate',
+        'agentic fabrication mission',
+        'Creation Capsule provenance hash',
+        'physical production TC-S Network',
+        'AI-engineered 3D printable code',
+        'text to physical object',
+        'Solar energy fabrication cost',
+        'ledger-first physical production',
+        'buy once produce on demand',
+        'production mission recovery',
+        'ArmOS Gemini 3 specialist inference',
+        'factory printer network replicator',
+        'physical artifact Solar energy'
+      ],
+
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "TC-S Solar Replicator — Era 22.1 Frontier Orchestration",
+        "url": "https://www.thecurrentsee.org/replicate.html",
+        "applicationCategory": "Physical Production Platform",
+        "description": "Describe any object in natural language and TC-S Network engineers a real, 3D-printable Creation Capsule through Era 22.1 Frontier Orchestration. OpenAI coordinates ArmOS Replicator nodes; Gemini 3 specialist inference engineers every part geometry and assembly. Human approval required before fabrication.",
+        "provider": {
+          "@type": "Organization",
+          "name": "The Current See PBC Inc.",
+          "url": "https://www.thecurrentsee.org"
+        },
+        "featureList": [
+          "Natural language to 3D-printable Creation Capsule",
+          "Era 22.1 Frontier Orchestration (OpenAI + ArmOS + Gemini 3)",
+          "Human-in-the-loop approval gate before fabrication begins",
+          "ArmOS Replicator node discovery and compatibility routing",
+          "Gemini 3 specialist engineering inference for part geometry",
+          "Creation Capsule with provenance hash and part manifest",
+          "Solar-priced fabrication energy accounting",
+          "Ledger-first mission tracking on marketplace_ledger",
+          "Mission persistence and recovery across server restarts",
+          "Factory Printer Network — event-registered 3D printers with API key auth"
+        ]
+      }
+    };
+  }
+
+  /**
+   * Generate My Library page SEO
+   */
+  async generateMyLibrarySEO(marketData, positioning) {
+    return {
+      title: `My Library — Own, Produce, and Deliver Artifacts | TC-S Network`,
+
+      description: `Your TC-S Network artifact library. Buy once, produce on demand — use the Solar Replicator to generate new physical or digital instances from artifacts you own. Every production event is recorded on the marketplace ledger. Track ArmOS fabrication mission approval, seal, and delivery in one place.`,
+
+      keywords: [
+        'My Library TC-S Network',
+        'buy once produce on demand',
+        'Solar Replicator library production',
+        'physical production missions',
+        'ArmOS fabrication approval',
+        'produce with AI owned artifacts',
+        'ledger-first production tracking',
+        'digital artifact ownership',
+        'physical artifact delivery TC-S',
+        'production mission recovery',
+        'marketplace ledger production events',
+        'Solar energy production cost',
+        'artifact seal and deliver',
+        'TC-S Network library management',
+        'production count artifact'
+      ],
+
+      structuredData: {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "My Library — TC-S Network",
+        "url": "https://www.thecurrentsee.org/my-library.html",
+        "description": "Personal artifact library for TC-S Network members. Shows owned digital and physical artifacts, manages Solar Replicator production missions, and tracks ArmOS fabrication approval and delivery.",
+        "isPartOf": {
+          "@type": "WebSite",
+          "name": "TC-S Network Foundation Market",
+          "url": "https://www.thecurrentsee.org"
+        }
+      }
+    };
+  }
+
+  /**
    * Generate creator-focused SEO
    */
   async generateCreatorSEO(marketData, positioning) {
@@ -464,6 +585,16 @@ class SEOGenerator {
         await this.updateMarketplaceSEO(pages.marketplace);
       }
 
+      if (pageType === 'all' || pageType === 'replicator') {
+        await this.updateReplicatorSEO(pages.replicator);
+      }
+
+      if (pageType === 'all' || pageType === 'myLibrary') {
+        await this.updateMyLibrarySEO(pages.myLibrary);
+      }
+
+      await this.updateSitemap();
+
       console.log(`✅ SEO files updated for ${pageType} with current market data`);
       return pages;
       
@@ -507,6 +638,124 @@ ${JSON.stringify(seoData.structuredData, null, 2)}
     content = content.replace(structuredDataRegex, newStructuredData);
     
     await fs.writeFile(indexPath, content, 'utf-8');
+  }
+
+  /**
+   * Update sitemap.xml with current date and all known pages
+   */
+  async updateSitemap() {
+    const today = new Date().toISOString().slice(0, 10);
+    const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.thecurrentsee.org/</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/marketplace.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/replicate.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/my-library.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/main-platform.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/wallet.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/music-now.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/SolarStandard.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/foundation</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/lifelens.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/uim-whitepaper.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/whitepapers.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.thecurrentsee.org/solar-dashboard.html</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+</urlset>`;
+    await fs.writeFile(sitemapPath, sitemap, 'utf-8');
+  }
+
+  /**
+   * Update replicate.html SEO (title + description)
+   */
+  async updateReplicatorSEO(seoData) {
+    const replicatePath = path.join(process.cwd(), 'public', 'replicate.html');
+    let content = await fs.readFile(replicatePath, 'utf-8');
+    content = content.replace(/<title>.*?<\/title>/i, `<title>${seoData.title}</title>`);
+    content = content.replace(
+      /<meta name="description" content=".*?">/i,
+      `<meta name="description" content="${seoData.description}">`
+    );
+    await fs.writeFile(replicatePath, content, 'utf-8');
+  }
+
+  /**
+   * Update my-library.html SEO (title + description)
+   */
+  async updateMyLibrarySEO(seoData) {
+    const libPath = path.join(process.cwd(), 'public', 'my-library.html');
+    let content = await fs.readFile(libPath, 'utf-8');
+    content = content.replace(/<title>.*?<\/title>/i, `<title>${seoData.title}</title>`);
+    content = content.replace(
+      /<meta name="description" content=".*?">/i,
+      `<meta name="description" content="${seoData.description}">`
+    );
+    await fs.writeFile(libPath, content, 'utf-8');
   }
 
   /**
