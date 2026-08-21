@@ -25,9 +25,7 @@ debug_*
 # User uploads and runtime data
 uploads/
 backups/
-data/daily-brief.json
-data/daily-brief-history.json
-data/daily-brief-trends.json
+data/daily-brief*.json
 
 # Keep essential files
 !attached_assets/requirements*.txt
@@ -48,3 +46,8 @@ public/videos/*.mkv
 attached_assets/*.mov
 attached_assets/*.mp4
 *.mov
+
+# Backup snapshots — tracked files removed 2026-08-08; ignore future recurrences
+*.backup
+*-backup.html
+*_backup.html
