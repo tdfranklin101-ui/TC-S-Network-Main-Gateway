@@ -14,4 +14,5 @@
 - [Era 22.1 ArmOS integration](era22-replicator-integration.md) — ArmOS is a remote app; only /api/engineer is live (retries needed, 504s on complex prompts); execution is labeled local simulation; approval race lesson.
 - [Ledger event replay](production-ledger-events.md) — event rows share created_at in a tx and uuid PKs aren't ordered; sort by metadata seq; refunds must reverse every leg via SQL increments.
 - [Solar Passport auth](solar-passport-auth.md) — two token systems: site session (tc_s_session) + passport HMAC (tcs_auth); /api/session exchanges passport→site session; every signup emails the passport artifact.
+- [Factory printer enrollment auth](factory-printer-enrollment-auth.md) — enrollment relies on ADMIN_KEY until a non-self-assignable admin allowlist exists.
 - [Repository commit identity](repository-commit-identity.md) — this checkout may lack a Git author identity; configure a repo-local agent identity before creating normal commits.

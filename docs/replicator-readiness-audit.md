@@ -184,9 +184,9 @@ POST /api/artifact3d/mint                  🍪  Generate + list as marketplace 
 POST /api/artifact3d/chain                 🍪  Search→match→create→list pipeline
 GET  /api/artifact3d/download/:id          🎟️  STL file download
 GET  /api/artifact3d/image/:id             🌐  Preview PNG
-POST /api/factory/printers/register        🌐  Register physical printer
+POST /api/factory/printers/register        🔒  X-Admin-Key enrollment; issues one-time printer key
 GET  /api/factory/printers                 🌐  Active printer list
-POST /api/factory/printers/:id/heartbeat   🌐  Printer heartbeat
+POST /api/factory/printers/:id/heartbeat   🔑  Printer-key authenticated heartbeat
 POST /api/factory/print                    🍪  Submit print job
 GET  /api/factory/queue                    🌐  Print queue status
 GET  /api/factory/pickup/:code             🌐  Pickup lookup by code
@@ -545,8 +545,7 @@ These are not blocking UIM architecture but must be resolved before any live UIM
 
 | Gap | Risk | Location |
 |---|---|---|
-| Factory printer registration is unauthenticated | Medium | `POST /api/factory/printers/register` — no auth check; any caller can register a printer |
-| Factory heartbeat is unauthenticated | Medium | `POST /api/factory/printers/:id/heartbeat` — printer can be impersonated |
+| Factory printer endpoint authentication | Resolved | Registration requires X-Admin-Key; each enrollment receives a one-time printer key and heartbeat verifies its stored hash |
 | Global rate limiter is disabled | Medium | `main.js:3694-3696` — explicitly commented out |
 | `policy.review` scheduler job silently skipped | Low | `scheduler.js` switch missing case for `policy.review` |
 | `server/routes/*.ts` are dead code | Low | `admin.ts, ai.ts, omega1.ts, payments.ts, power-twin.ts, progression.ts` imported nowhere |

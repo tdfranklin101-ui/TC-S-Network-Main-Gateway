@@ -1658,6 +1658,8 @@ export const factoryPrinters = pgTable("factory_printers", {
   eventId: varchar("event_id"),
   location: varchar("location"),
   printerModel: varchar("printer_model"),
+  // Public capability declarations. Runtime-only printer credential hashes live
+  // under the reserved `_factory_auth` key so no deploy-blocking column is needed.
   capabilities: jsonb("capabilities"),
   buildVolume: jsonb("build_volume"),
   materials: text("materials").array(),

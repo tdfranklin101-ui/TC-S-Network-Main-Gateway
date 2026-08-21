@@ -978,6 +978,64 @@ function getCookie(req, name) {
   return null;
 }
 
+// Factory printer credentials are stored as a hash in the existing capabilities
+// jsonb field. Keeping this internal metadata in an existing field avoids a
+// publish-blocking schema diff while ensuring the raw printer key is never stored.
+const FACTORY_AUTH_CAPABILITY_KEY = '_factory_auth';
+
+function factoryUnauthorized(res, message = 'Factory printer authentication required') {
+  res.writeHead(401, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify({ error: message }));
+}
+
+function getFactoryPrinterAuth(capabilities) {
+  if (!capabilities || typeof capabilities !== 'object' || Array.isArray(capabilities)) return null;
+  const auth = capabilities[FACTORY_AUTH_CAPABILITY_KEY];
+  return auth && typeof auth === 'object' && !Array.isArray(auth) ? auth : null;
+}
+
+function stripFactoryPrinterAuth(printer) {
+  const safePrinter = { ...printer };
+  const capabilities = safePrinter.capabilities;
+  if (capabilities && typeof capabilities === 'object' && !Array.isArray(capabilities)) {
+    const { [FACTORY_AUTH_CAPABILITY_KEY]: _factoryAuth, ...publicCapabilities } = capabilities;
+    safePrinter.capabilities = publicCapabilities;
+  }
+  // Older deployments briefly stored the credential hash in metadata. Never
+  // include that column in the public printer inventory either.
+  delete safePrinter.metadata;
+  return safePrinter;
+}
+
+function hashFactoryPrinterKey(apiKey) {
+  return crypto.createHash('sha256').update(apiKey).digest('hex');
+}
+
+function factoryStringsMatch(suppliedValue, expectedValue) {
+  if (typeof suppliedValue !== 'string' || typeof expectedValue !== 'string') return false;
+  const supplied = Buffer.from(suppliedValue, 'utf8');
+  const expected = Buffer.from(expectedValue, 'utf8');
+  return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+}
+
+function factoryPrinterKeysMatch(apiKey, expectedHash) {
+  if (!apiKey || !expectedHash || typeof expectedHash !== 'string') return false;
+  return factoryStringsMatch(hashFactoryPrinterKey(apiKey), expectedHash);
+}
+
+async function getFactoryAdminIdentity(req) {
+  const suppliedAdminKey = req.headers['x-admin-key'];
+  if (
+    process.env.ADMIN_KEY &&
+    typeof suppliedAdminKey === 'string' &&
+    factoryPrinterKeysMatch(suppliedAdminKey, hashFactoryPrinterKey(process.env.ADMIN_KEY))
+  ) {
+    return { id: 'system-admin', role: 'admin', method: 'admin_key' };
+  }
+
+  return null;
+}
+
 // File upload configuration - using disk storage for security
 const upload = multer({
   storage: multer.diskStorage({
@@ -18965,9 +19023,14 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
-  // 6. POST /api/factory/printers/register — Register a printer
+  // 6. POST /api/factory/printers/register — Register a printer (administrator only)
   if (pathname === '/api/factory/printers/register' && req.method === 'POST') {
     try {
+      const admin = await getFactoryAdminIdentity(req);
+      if (!admin) {
+        factoryUnauthorized(res, 'Factory printer registration requires X-Admin-Key');
+        return;
+      }
       const body = await parseBody(req);
       const { name, ownerId, eventId, location, printerModel, capabilities, buildVolume, materials } = body;
       if (!name) {
@@ -18976,6 +19039,21 @@ Respond with valid JSON only. Be insightful and specific.`;
         return;
       }
       const printerId = randomUUID();
+      const printerApiKey = crypto.randomBytes(32).toString('base64url');
+      const publicCapabilities = capabilities && typeof capabilities === 'object' && !Array.isArray(capabilities)
+        ? capabilities
+        : {};
+      // Reserve the internal key so callers cannot choose their own credential
+      // hash or expose it through the public capabilities response.
+      const { [FACTORY_AUTH_CAPABILITY_KEY]: _factoryAuth, ...safeCapabilities } = publicCapabilities;
+      const storedCapabilities = {
+        ...safeCapabilities,
+        [FACTORY_AUTH_CAPABILITY_KEY]: {
+          key_hash: hashFactoryPrinterKey(printerApiKey),
+          issued_at: new Date().toISOString(),
+          issued_by: admin.id
+        }
+      };
       await pool.query(
         `INSERT INTO factory_printers (id, name, owner_id, event_id, location, printer_model, capabilities, build_volume, materials, status, is_active, total_jobs_completed, last_heartbeat, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'idle', true, 0, NOW(), NOW())`,
@@ -18986,14 +19064,22 @@ Respond with valid JSON only. Be insightful and specific.`;
           eventId || null,
           location || null,
           printerModel || null,
-          JSON.stringify(capabilities || {}),
+          JSON.stringify(storedCapabilities),
           JSON.stringify(buildVolume || {}),
           materials || ['PLA']
         ]
       );
-      console.log(`🖨️ Printer registered: ${printerId} name=${name}`);
+      console.log(`🖨️ Printer registered: ${printerId} name=${name} by=${admin.id}`);
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, printerId, name }));
+      // The raw key is deliberately returned once. Only its hash is retained.
+      res.end(JSON.stringify({
+        success: true,
+        printerId,
+        name,
+        printerApiKey,
+        printer_api_key: printerApiKey,
+        warning: 'Store printerApiKey securely. It is required for heartbeats and cannot be retrieved again.'
+      }));
     } catch (error) {
       console.error('🖨️ Printer registration error:', error.message);
       res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -19014,7 +19100,11 @@ Respond with valid JSON only. Be insightful and specific.`;
         result = await pool.query('SELECT * FROM factory_printers WHERE is_active = true ORDER BY created_at DESC');
       }
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ success: true, printers: result.rows, count: result.rows.length }));
+      res.end(JSON.stringify({
+        success: true,
+        printers: result.rows.map(stripFactoryPrinterAuth),
+        count: result.rows.length
+      }));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Failed to list printers: ' + error.message }));
@@ -19022,11 +19112,28 @@ Respond with valid JSON only. Be insightful and specific.`;
     return;
   }
 
-  // 8. POST /api/factory/printers/:id/heartbeat — Printer heartbeat
+  // 8. POST /api/factory/printers/:id/heartbeat — Printer heartbeat (printer key required)
   if (pathname.startsWith('/api/factory/printers/') && pathname.endsWith('/heartbeat') && req.method === 'POST') {
     try {
       const parts = pathname.split('/');
       const printerId = parts[4];
+      // X-Factory-Key is accepted for printers enrolled by the earlier secured
+      // release; new integrations should use X-Printer-API-Key.
+      const printerApiKey = req.headers['x-printer-api-key'] || req.headers['x-factory-key'];
+      if (!printerApiKey || typeof printerApiKey !== 'string') {
+        factoryUnauthorized(res, 'Printer heartbeat requires X-Printer-API-Key');
+        return;
+      }
+      const printerResult = await pool.query('SELECT * FROM factory_printers WHERE id = $1', [printerId]);
+      const printer = printerResult.rows[0];
+      const currentAuth = getFactoryPrinterAuth(printer?.capabilities);
+      // Support pre-existing secured printers from the previous credential
+      // format without retaining or exposing their plaintext keys.
+      const storedHash = currentAuth?.key_hash || printer?.metadata?.api_key_hash;
+      if (!printer || !printer.is_active || !factoryPrinterKeysMatch(printerApiKey, storedHash)) {
+        factoryUnauthorized(res, 'Invalid printer credential');
+        return;
+      }
       const body = await parseBody(req);
       const status = body.status || 'idle';
       await pool.query(
