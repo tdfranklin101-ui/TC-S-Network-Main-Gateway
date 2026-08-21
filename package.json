@@ -3,7 +3,7 @@
   "main": "main.js",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.37.0",
-    "@google-cloud/storage": "^7.17.0",
+    "@google-cloud/storage": "^7.22.0",
     "@neondatabase/serverless": "^1.0.1",
     "@replit/object-storage": "^1.0.0",
     "@replit/vite-plugin-cartographer": "^0.0.11",
@@ -22,7 +22,7 @@
     "@types/passport": "^1.0.17",
     "@types/passport-local": "^1.0.38",
     "@types/ws": "^8.18.1",
-    "@vercel/node": "^5.5.13",
+    "@vercel/node": "^5.10.2",
     "@vitejs/plugin-react": "^4.3.4",
     "@worldcoin/idkit": "^2.4.1",
     "adm-zip": "^0.5.16",
