@@ -3667,7 +3667,8 @@ console.log('📁 Member content sharing system ready');
 console.log('🎯 AI automatic promotion system active');
 
 const server = http.createServer(async (req, res) => {
-  const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+  const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+  const pathname = parsedUrl.pathname;
 
   const incomingHost = (req.headers.host || '').toLowerCase().replace(/:\d+$/, '');
 

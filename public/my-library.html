@@ -592,7 +592,10 @@
         const res = await fetch('/api/session', { credentials: 'include' });
         if (!res.ok) return null;
         const data = await res.json();
-        if (data.loggedIn && data.user) {
+        if ((data.loggedIn || data.authenticated) && data.user) {
+          if (data.solarBalance !== undefined) {
+            data.user.solarBalance = data.solarBalance;
+          }
           return data.user;
         }
         return null;
@@ -1010,7 +1013,9 @@
           throw new Error('Failed to load library');
         }
         var data = await res.json();
-        var artifacts = Array.isArray(data) ? data : (data.artifacts || data.items || data.purchases || []);
+        // The canonical library API returns { library: [...] }. Keep the
+        // legacy shapes for backwards compatibility with earlier endpoints.
+        var artifacts = Array.isArray(data) ? data : (data.library || data.artifacts || data.items || data.purchases || []);
         if (artifacts.length === 0) {
           showEmptyState();
           return;
