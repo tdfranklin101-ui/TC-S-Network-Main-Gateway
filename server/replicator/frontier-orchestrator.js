@@ -1,6 +1,6 @@
 /**
  * ERA 22.1 — OPENAI FRONTIER ORCHESTRATOR
- * =======================================
+ * ---------------------------------------
  * OpenAI acts as the TC-S network-level reasoning/orchestration intelligence
  * (Responses API + function tools). It understands marketplace intent,
  * discovers capabilities, initiates the ArmOS workflow, and interprets
@@ -55,17 +55,28 @@ async function orchestrateMission(mission, requestedNodeId) {
   const openai = new OpenAI({ apiKey });
 
   mission.timeline.push({ stage: 'OPENAI FRONTIER ORCHESTRATOR', at: new Date().toISOString() });
+  // engineering_error is a per-orchestration-run guard. A restart recovery
+  // starts a new bounded run from the persisted mission, so it may retry the
+  // temporary ArmOS failure instead of staying permanently incomplete.
+  if (mission.engineering_error) {
+    mission.last_engineering_error = mission.engineering_error;
+    mission.engineering_error = null;
+    mission.recovery = null;
+  }
+  await armos.persistMission(mission);
 
   // Tool implementations — closures over the mission record. Adapter is the
   // single source of truth; the LLM only sequences the calls.
   const impl = {
     discover_capabilities: async () => {
       mission.timeline.push({ stage: 'CAPABILITY DISCOVERY', at: new Date().toISOString() });
+      await armos.persistMission(mission);
       return armos.getCapabilities();
     },
     get_replicator_nodes: async () => {
       if (!mission.timeline.find(t => t.stage === 'NODE DISCOVERY')) {
         mission.timeline.push({ stage: 'NODE DISCOVERY', at: new Date().toISOString() });
+        await armos.persistMission(mission);
       }
       return armos.getNodes();
     },
@@ -97,6 +108,7 @@ async function orchestrateMission(mission, requestedNodeId) {
             max_attempts: ENGINEERING_RECOVERY_ATTEMPTS,
             cooldown_ms: ENGINEERING_RECOVERY_COOLDOWN_MS
           };
+          await armos.persistMission(mission);
           await new Promise(resolve => setTimeout(resolve, ENGINEERING_RECOVERY_COOLDOWN_MS));
         }
       }
@@ -105,8 +117,12 @@ async function orchestrateMission(mission, requestedNodeId) {
           message: engineeringError.message,
           retryable: !!engineeringError.retryable
         };
+        await armos.persistMission(mission);
         throw engineeringError;
       }
+      mission.engineering_error = null;
+      mission.recovery = null;
+      await armos.persistMission(mission);
       return {
         assembly_name: mission.engineering.assembly.name,
         parts: mission.engineering.assembly.pieces.map(p => ({ label: p.label, color: p.color, connector: p.connector })),
@@ -119,11 +135,13 @@ async function orchestrateMission(mission, requestedNodeId) {
       if (out.compatibility === 'ROUTE_REQUIRED') {
         mission.routing_events.push({ node_id, verdict: 'ROUTE_REQUIRED', reason: out.reason, at: new Date().toISOString() });
         mission.timeline.push({ stage: `ROUTE_REQUIRED (${node_id})`, at: new Date().toISOString() });
+        await armos.persistMission(mission);
         return out;
       }
       mission.capsule = out.capsule;
       mission.routing_events.push({ node_id, verdict: 'ACCEPTED', at: new Date().toISOString() });
       mission.timeline.push({ stage: `CREATION CAPSULE (${node_id})`, at: new Date().toISOString() });
+      await armos.persistMission(mission);
       return { compatibility: 'ACCEPTED', node_id, object_name: out.capsule.object_name, parts: out.capsule.parts.length, dual_arm: out.capsule.node.dual_arm, capsule_hash: out.capsule.provenance.capsule_hash };
     },
     request_replication_execution: async () => {
@@ -132,6 +150,7 @@ async function orchestrateMission(mission, requestedNodeId) {
       if (!mission.timeline.find(t => t.stage === 'WAITING_APPROVAL')) {
         mission.timeline.push({ stage: 'WAITING_APPROVAL', at: new Date().toISOString() });
       }
+      await armos.persistMission(mission);
       return { mission_id: mission.mission_id, status: 'WAITING_APPROVAL', note: 'Human approval required before fabrication begins.' };
     },
     get_replication_status: async () => armos.getMissionStatus(mission.mission_id),
@@ -163,6 +182,7 @@ async function orchestrateMission(mission, requestedNodeId) {
       } catch (e) {
         if (e.retryable) mission.retryable = true;
         mission.error = e.message;
+        await armos.persistMission(mission);
         result = { error: e.message };
       }
       input.push({ type: 'function_call_output', call_id: call.call_id, output: JSON.stringify(result) });
@@ -177,6 +197,7 @@ async function orchestrateMission(mission, requestedNodeId) {
     mission.timeline.push({ stage: 'ORCHESTRATION_INCOMPLETE', at: new Date().toISOString() });
   }
   mission.inference_routing = inferenceRoutingTelemetry();
+  await armos.persistMission(mission);
   return mission;
 }
 

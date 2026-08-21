@@ -1,6 +1,6 @@
 /**
  * ERA 22.1 — ARMOS API ADAPTER
- * ============================
+ * ----------------------------
  * Clean service layer between the TC-S Network and the ArmOS Replicator.
  * The OpenAI frontier orchestrator talks to this adapter — ArmOS-specific
  * HTTP calls are never embedded elsewhere in the application.
@@ -91,6 +91,69 @@ function rememberMission(m) {
     MISSIONS.delete(oldest);
   }
   MISSIONS.set(m.mission_id, m);
+}
+
+/**
+ * Return the restart-safe portion of a mission record.
+ *
+ * The control token is deliberately not persisted in the marketplace ledger.
+ * Physical production approval is authorized by the owning production
+ * request, and a restored mission gets a fresh token for the standalone
+ * replicator API.
+ */
+function snapshotMission(m) {
+  if (!m || !m.mission_id) return null;
+  return {
+    mission_id: m.mission_id,
+    intent: m.intent,
+    requested_node_id: m.requested_node_id || null,
+    status: m.status,
+    created_at: m.created_at,
+    timeline: Array.isArray(m.timeline) ? m.timeline : [],
+    engineering: m.engineering || null,
+    capsule: m.capsule || null,
+    routing_events: Array.isArray(m.routing_events) ? m.routing_events : [],
+    orchestrator_summary: m.orchestrator_summary || null,
+    execution_started_at: m.execution_started_at || null,
+    result: m.result || null,
+    error: m.error || null,
+    retryable: !!m.retryable,
+    recovery: m.recovery || null,
+    engineering_error: m.engineering_error || null,
+    inference_routing: m.inference_routing || null
+  };
+}
+
+/**
+ * Rehydrate a mission from a ledger snapshot after a workflow restart.
+ * The caller can provide the ledger writer used for subsequent snapshots.
+ */
+function restoreMission(snapshot, { persist } = {}) {
+  if (!snapshot || !snapshot.mission_id) return null;
+  const mission = {
+    ...snapshot,
+    control_token: crypto.randomBytes(16).toString('hex'),
+    timeline: Array.isArray(snapshot.timeline) ? snapshot.timeline : [],
+    routing_events: Array.isArray(snapshot.routing_events) ? snapshot.routing_events : [],
+    engineering: snapshot.engineering || null,
+    capsule: snapshot.capsule || null,
+    result: snapshot.result || null,
+    error: snapshot.error || null,
+    recovery: snapshot.recovery || null,
+    engineering_error: snapshot.engineering_error || null,
+    inference_routing: snapshot.inference_routing || null
+  };
+  if (typeof persist === 'function') {
+    Object.defineProperty(mission, '_persistSnapshot', { value: persist, writable: true, enumerable: false });
+  }
+  rememberMission(mission);
+  return mission;
+}
+
+async function persistMission(mission) {
+  if (mission && typeof mission._persistSnapshot === 'function') {
+    await mission._persistSnapshot(snapshotMission(mission));
+  }
 }
 
 function sha256(obj) {
@@ -270,6 +333,7 @@ async function executeMission(mission_id) {
   m.status = 'EXECUTING';
   m.execution_started_at = Date.now();
   m.timeline.push({ stage: 'APPROVED', at: new Date().toISOString() });
+  await persistMission(m);
   return { mission_id, status: 'EXECUTING' };
 }
 
@@ -283,6 +347,9 @@ function currentStage(m) {
 async function getMissionStatus(mission_id) {
   const m = MISSIONS.get(mission_id);
   if (!m) throw new Error(`Unknown mission: ${mission_id}`);
+  const previousStatus = m.status;
+  const previousTimelineLength = m.timeline.length;
+  const previousResult = m.result;
   const cur = currentStage(m);
   if (cur) {
     // Append newly-passed stages to the timeline exactly once.
@@ -294,6 +361,9 @@ async function getMissionStatus(mission_id) {
       m.status = 'REPLICATION_COMPLETE';
       m.result = buildResult(m);
     }
+  }
+  if (m.status !== previousStatus || m.timeline.length !== previousTimelineLength || m.result !== previousResult) {
+    await persistMission(m);
   }
   return {
     mission_id,
@@ -347,7 +417,11 @@ async function getMissionResult(mission_id) {
 
 function getMission(mission_id) { return MISSIONS.get(mission_id) || null; }
 
-function createMissionRecord(intent, requestedNodeId = null) {
+function createMissionRecord(intent, options = {}) {
+  const config = typeof options === 'string'
+    ? { requestedNodeId: options }
+    : (options || {});
+  const { persist, requestedNodeId = null } = config;
   // 96-bit random id (unguessable) + separate control token required for
   // state-changing operations (approve/cancel).
   const mission_id = 'TCSM-' + crypto.randomBytes(12).toString('hex').toUpperCase();
@@ -365,16 +439,20 @@ function createMissionRecord(intent, requestedNodeId = null) {
     orchestrator_summary: null,
     result: null
   };
+  if (typeof persist === 'function') {
+    Object.defineProperty(m, '_persistSnapshot', { value: persist, writable: true, enumerable: false });
+  }
   rememberMission(m);
   return m;
 }
 
-function cancelMission(mission_id) {
+async function cancelMission(mission_id) {
   const m = MISSIONS.get(mission_id);
   if (!m) throw new Error(`Unknown mission: ${mission_id}`);
   if (m.status === 'REPLICATION_COMPLETE') throw new Error('Mission already complete.');
   m.status = 'CANCELLED';
   m.timeline.push({ stage: 'CANCELLED', at: new Date().toISOString() });
+  await persistMission(m);
   return m;
 }
 
@@ -382,5 +460,5 @@ module.exports = {
   ARMOS_BASE, CAPABILITY_DESCRIPTOR, NODES,
   getCapabilities, getNodes, engineerMission, createCapsule,
   executeMission, getMissionStatus, getMissionResult,
-  getMission, createMissionRecord, cancelMission
+  getMission, createMissionRecord, restoreMission, snapshotMission, persistMission, cancelMission
 };

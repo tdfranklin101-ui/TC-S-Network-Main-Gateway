@@ -14,10 +14,16 @@
  * Event model (spec):
  *   PRODUCTION_REQUEST_CREATED → PRODUCTION_QUOTE_ISSUED (no charge) →
  *   PRODUCTION_APPROVED → PRODUCTION_STARTED → PRODUCTION_SOLAR_CHARGED →
- *   PRODUCTION_INSTANCE_CREATED → PRODUCTION_COMPLETED
+ *   PRODUCTION_INSTANCE_CREATED → EXECUTION_ROUTED →
+ *   EXECUTION_MISSION_SNAPSHOT → PRODUCTION_COMPLETED
  *   DELIVERY_QUOTE_ISSUED → DELIVERY_APPROVED → SEALING_DELIVERY_STARTED →
  *   SEALING_DELIVERY_SOLAR_CHARGED → SEALED → DIGITALLY_DELIVERED / SHIPPED / DELIVERED
  *   TRANSACTION_REFUNDED (remediation if execution fails after charge)
+ *
+ * EXECUTION_MISSION_SNAPSHOT records the restart-safe ArmOS mission state for
+ * paid physical production. The in-memory adapter rehydrates from its latest
+ * snapshot after a workflow restart; only a route with no snapshot is
+ * genuinely unrecoverable.
  *
  * Provider state ≠ ledger state: if execution completes but the ledger commit
  * fails, the request surfaces COMPLETED_AWAITING_LEDGER_RECONCILIATION and the
@@ -184,7 +190,8 @@ async function getRequest(pool, requestId) {
       case 'PRODUCTION_STARTED': state.status = 'PRODUCTION_STARTED'; break;
       case 'PRODUCTION_SOLAR_CHARGED': state.production_transaction_id = md.transaction_id; break;
       case 'PRODUCTION_INSTANCE_CREATED': state.instance = md.asset; state.status = 'IN_PRODUCTION'; break;
-      case 'EXECUTION_ROUTED': state.mission = md.mission || null; break;
+      case 'EXECUTION_ROUTED': state.mission = md.mission_snapshot || md.mission || null; break;
+      case 'EXECUTION_MISSION_SNAPSHOT': state.mission = md.mission || state.mission; break;
       case 'DIGITAL_OUTPUT_CREATED': state.output = md.asset; break;
       case 'PRODUCTION_COMPLETED': state.status = 'PRODUCTION_COMPLETED'; break;
       case 'PRODUCTION_FAILED': state.status = 'PRODUCTION_FAILED'; break;

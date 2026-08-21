@@ -3932,6 +3932,19 @@ const server = http.createServer(async (req, res) => {
         let state = await productionLedger.getRequest(pool, requestId);
         if (!state) return jsonOut(404, { error: 'Unknown production request (not in ledger — it did not happen).' });
         if (String(state.request.owner_id) !== String(userId)) return jsonOut(403, { error: 'This production request belongs to another member.' });
+        const persistMissionSnapshot = (snapshot) => productionLedger.writeEvent(
+          pool.query.bind(pool), requestId, 'EXECUTION_MISSION_SNAPSHOT', userId,
+          { mission: snapshot, route: 'TC-S.REPLICATOR.ARMOS', execution_mode: 'SIMULATION' },
+          `Persisted Replicator mission snapshot ${snapshot.mission_id}`
+        );
+        const getOrRestorePhysicalMission = () => {
+          if (!state.mission || !state.mission.mission_id) return null;
+          const active = armosAdapter.getMission(state.mission.mission_id);
+          if (active) return active;
+          return state.mission.status
+            ? armosAdapter.restoreMission(state.mission, { persist: persistMissionSnapshot })
+            : null;
+        };
 
         // GET status — replays ledger; retries any pending reconciliation first.
         if (!sub && req.method === 'GET') {
@@ -3961,15 +3974,46 @@ const server = http.createServer(async (req, res) => {
           }
           // Physical route: reflect replicator mission progress + reconcile completion.
           if (state.mission && state.mission.mission_id && ['IN_PRODUCTION', 'COMPLETED_AWAITING_LEDGER_RECONCILIATION'].includes(state.status)) {
-            const m = armosAdapter.getMission(state.mission.mission_id);
+            // The adapter store is process-local. Rehydrate the latest ledger
+            // snapshot before deciding whether this paid mission is
+            // recoverable, then continue polling or resume orchestration.
+            const m = getOrRestorePhysicalMission();
             if (!m && state.status === 'IN_PRODUCTION') {
-              // Mission record lost (server restart before completion): the
-              // charged execution cannot be recovered — refund per policy.
+              // Older routes may contain only a mission id and therefore have
+              // no durable state to rehydrate. This is the genuinely
+              // unrecoverable fallback; new routes always persist a snapshot.
               const refund = await productionLedger.refundProduction(pool, requestId, state, userId, 'Replicator mission record lost (server restart before completion)');
               state = await productionLedger.getRequest(pool, requestId);
               state.refund_result = refund;
             }
             if (m) {
+              if (['ORCHESTRATING', 'ORCHESTRATION_FAILED', 'ORCHESTRATION_INCOMPLETE'].includes(m.status)) {
+                // A restart can interrupt the asynchronous OpenAI/ArmOS
+                // orchestration before WAITING_APPROVAL. Transient
+                // orchestration failures are also retried against the durable
+                // snapshot instead of refunding a recoverable paid order.
+                if (!m._orchestrationInFlight) {
+                  if (m.status !== 'ORCHESTRATING') {
+                    m.status = 'ORCHESTRATING';
+                    m.timeline.push({ stage: 'ORCHESTRATION_RETRY', at: new Date().toISOString() });
+                    try { await armosAdapter.persistMission(m); } catch (persistErr) {
+                      console.error(`[Production] Recovered mission ${m.mission_id} retry snapshot failed:`, persistErr.message);
+                    }
+                  }
+                  m._orchestrationInFlight = true;
+                  frontierOrchestrator.orchestrateMission(m, null)
+                    .catch(async err => {
+                      console.error(`[Production] Recovered mission ${m.mission_id} orchestration failed:`, err.message);
+                      m.status = 'ORCHESTRATION_FAILED';
+                      m.error = err.message;
+                      m.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
+                      try { await armosAdapter.persistMission(m); } catch (persistErr) {
+                        console.error(`[Production] Recovered mission ${m.mission_id} snapshot failed:`, persistErr.message);
+                      }
+                    })
+                    .finally(() => { m._orchestrationInFlight = false; });
+                }
+              }
               if (m.status === 'EXECUTING' || m.status === 'REPLICATION_COMPLETE') await armosAdapter.getMissionStatus(m.mission_id);
               state.mission_status = m.status;
               if (m.status === 'REPLICATION_COMPLETE') {
@@ -3978,7 +4022,10 @@ const server = http.createServer(async (req, res) => {
                   'Provider reported completion — ledger commit');
                 state = await productionLedger.getRequest(pool, requestId);
                 state.mission_status = m.status;
-              } else if (m.status === 'ORCHESTRATION_FAILED' || m.status === 'ORCHESTRATION_INCOMPLETE' || m.status === 'CANCELLED') {
+              } else if (m.status === 'CANCELLED') {
+                // Cancellation is an explicit terminal provider outcome. A
+                // durable snapshot alone is not a reason to refund; only a
+                // confirmed terminal cancellation reaches remediation here.
                 const refund = await productionLedger.refundProduction(pool, requestId, state, userId, `Replicator mission ${m.status}`);
                 state = await productionLedger.getRequest(pool, requestId);
                 state.mission_status = m.status;
@@ -4014,9 +4061,14 @@ const server = http.createServer(async (req, res) => {
             try {
               const missionIntent = (state.request.parameters && String(state.request.parameters.intent || '').trim())
                 || `Build a physical instance of ${state.request.root_title}`;
-              mission = armosAdapter.createMissionRecord(missionIntent.slice(0, 300));
+              mission = armosAdapter.createMissionRecord(missionIntent.slice(0, 300), { persist: persistMissionSnapshot });
               await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'EXECUTION_ROUTED', userId,
-                { mission: { mission_id: mission.mission_id }, route: 'TC-S.REPLICATOR.ARMOS', execution_mode: 'SIMULATION' }, `Routed to Replicator mission ${mission.mission_id}`);
+                {
+                  mission: { mission_id: mission.mission_id },
+                  mission_snapshot: armosAdapter.snapshotMission(mission),
+                  route: 'TC-S.REPLICATOR.ARMOS',
+                  execution_mode: 'SIMULATION'
+                }, `Routed to Replicator mission ${mission.mission_id}`);
             } catch (routeErr) {
               // Compensation: charge committed but the route never persisted —
               // reverse every leg (idempotent) instead of stranding the buyer.
@@ -4024,17 +4076,21 @@ const server = http.createServer(async (req, res) => {
               const refund = await productionLedger.refundProduction(pool, requestId, state, userId, `Routing/persistence failed after charge: ${routeErr.message}`);
               return jsonOut(502, { error: `Production routing failed: ${routeErr.message}`, refund });
             }
-            frontierOrchestrator.orchestrateMission(mission, null).catch(err => {
+            mission._orchestrationInFlight = true;
+            frontierOrchestrator.orchestrateMission(mission, null).catch(async err => {
               console.error(`[Production] Mission ${mission.mission_id} orchestration failed:`, err.message);
               mission.status = 'ORCHESTRATION_FAILED';
               mission.error = err.message;
               mission.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
-            });
+              try { await armosAdapter.persistMission(mission); } catch (persistErr) {
+                console.error(`[Production] Mission ${mission.mission_id} failure snapshot failed:`, persistErr.message);
+              }
+            }).finally(() => { mission._orchestrationInFlight = false; });
             return jsonOut(200, {
               success: true, status: 'IN_PRODUCTION', route: 'TC-S.REPLICATOR.ARMOS',
               transaction_id: charge.transactionId, instance_id: charge.instanceId,
               amount_charged: charge.amount, new_balance: charge.newBalance,
-              mission_id: mission.mission_id, mission_control_token: mission.control_token,
+              mission_id: mission.mission_id,
               approval_gate: 'Physical fabrication requires explicit human approval at WAITING_APPROVAL before execution (simulation) begins.'
             });
           }
@@ -4088,8 +4144,8 @@ const server = http.createServer(async (req, res) => {
         // of the raw mission control token, so the gate survives page reloads.
         if (sub === 'gate/approve' && req.method === 'POST') {
           if (!state.mission || !state.mission.mission_id) return jsonOut(400, { error: 'This production request has no fabrication mission to approve.' });
-          const m = armosAdapter.getMission(state.mission.mission_id);
-          if (!m) return jsonOut(409, { error: 'Fabrication mission record is unavailable (server restart) — the request will be remediated with a refund on the next status read.' });
+          const m = getOrRestorePhysicalMission();
+          if (!m) return jsonOut(409, { error: 'Fabrication mission record is unavailable and has no recoverable ledger snapshot.' });
           if (m.status !== 'WAITING_APPROVAL') return jsonOut(400, { error: `Mission is ${m.status}, not WAITING_APPROVAL.` });
           const result = await armosAdapter.executeMission(m.mission_id);
           await productionLedger.writeEvent(pool.query.bind(pool), requestId, 'FABRICATION_GATE_APPROVED', userId,
@@ -4255,7 +4311,7 @@ const server = http.createServer(async (req, res) => {
         if (sub === 'status' && req.method === 'GET') return jsonOut(200, await armosAdapter.getMissionStatus(mission.mission_id));
         if (sub === 'result' && req.method === 'GET') return jsonOut(200, await armosAdapter.getMissionResult(mission.mission_id));
         if (sub === 'approve' && req.method === 'POST') return jsonOut(200, await armosAdapter.executeMission(mission.mission_id));
-        if (sub === 'cancel' && req.method === 'POST') { armosAdapter.cancelMission(mission.mission_id); return jsonOut(200, { mission_id: mission.mission_id, status: 'CANCELLED' }); }
+        if (sub === 'cancel' && req.method === 'POST') { await armosAdapter.cancelMission(mission.mission_id); return jsonOut(200, { mission_id: mission.mission_id, status: 'CANCELLED' }); }
       }
       return jsonOut(404, { error: 'Unknown replicator endpoint.' });
     } catch (error) {
