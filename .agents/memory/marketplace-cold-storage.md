@@ -32,6 +32,10 @@ compatible with plain inline text (older rows) AND `cold://` pointers.
   NEVER run the backfill in an environment whose deployed code cannot read the
   pointers it writes — backfilling prod before a read-path fix is published
   converts readable inline rows into unreadable pointers.
+- Production batches of 500 can take long enough that a client running several
+  batches may hit its five-minute command timeout. A timeout does not imply the
+  completed batches rolled back; reissue the idempotent request and continue from
+  the newly reported `remaining` count until it reaches zero.
 - `/api/artifacts/available` is metadata-only (never selected content_body); its
   memory cost is row-count, not content. It still loads the FULL catalog per
   request and the frontend does client-side search over it — server-side
