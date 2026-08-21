@@ -4185,7 +4185,7 @@ const server = http.createServer(async (req, res) => {
         const intent = String(body.intent || '').trim().replace(/[<>]/g, '').slice(0, 300);
         if (intent.length < 3) return jsonOut(400, { error: 'Provide a mission intent, e.g. "Build a table".' });
         const requestedNode = body.node_id && armosAdapter.NODES.find(n => n.node_id === body.node_id) ? body.node_id : null;
-        const mission = armosAdapter.createMissionRecord(intent);
+        const mission = armosAdapter.createMissionRecord(intent, requestedNode);
         jsonOut(202, { mission_id: mission.mission_id, control_token: mission.control_token, status: mission.status });
         // Orchestrate asynchronously; client polls GET /api/replicator/mission/:id
         RL.inFlight++;
@@ -4196,6 +4196,40 @@ const server = http.createServer(async (req, res) => {
           mission.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
         }).finally(() => { RL.inFlight = Math.max(0, RL.inFlight - 1); });
         return;
+      }
+      const retryMatch = pathname.match(/^\/api\/replicator\/mission\/(TCSM-[A-F0-9]+)\/retry$/);
+      if (retryMatch && req.method === 'POST') {
+        const mission = armosAdapter.getMission(retryMatch[1]);
+        if (!mission) return jsonOut(404, { error: 'Unknown mission.' });
+        const provided = req.headers['x-mission-token'] || '';
+        if (provided !== mission.control_token) return jsonOut(403, { error: 'Invalid mission control token.' });
+        if (!['ORCHESTRATION_FAILED', 'ORCHESTRATION_INCOMPLETE'].includes(mission.status)) {
+          return jsonOut(409, { error: `Mission is ${mission.status}; only failed orchestration can be retried.` });
+        }
+        if (!mission.retryable) {
+          return jsonOut(409, { error: 'This mission cannot be automatically retried. See its timeline for the non-transient error.' });
+        }
+        const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket.remoteAddress || 'unknown';
+        const now = Date.now();
+        const hits = (RL.perIp.get(ip) || []).filter(t => now - t < 10 * 60 * 1000);
+        if (hits.length >= 5) return jsonOut(429, { error: 'Rate limit: max 5 replication attempts per 10 minutes.' });
+        if (RL.inFlight >= 3) return jsonOut(503, { error: 'Orchestrator busy — try again shortly.' });
+        hits.push(now); RL.perIp.set(ip, hits);
+        mission.status = 'ORCHESTRATING';
+        mission.error = null;
+        mission.retryable = false;
+        mission.engineering_error = null;
+        mission.recovery = null;
+        mission.timeline.push({ stage: 'ORCHESTRATION RETRY REQUESTED', at: new Date().toISOString() });
+        RL.inFlight++;
+        frontierOrchestrator.orchestrateMission(mission, mission.requested_node_id || null).catch(err => {
+          console.error(`[REPLICATOR] Mission ${mission.mission_id} retry failed:`, err.message);
+          mission.status = 'ORCHESTRATION_FAILED';
+          mission.error = err.message;
+          mission.retryable = !!err.retryable;
+          mission.timeline.push({ stage: 'ORCHESTRATION_FAILED', at: new Date().toISOString() });
+        }).finally(() => { RL.inFlight = Math.max(0, RL.inFlight - 1); });
+        return jsonOut(202, { mission_id: mission.mission_id, status: mission.status });
       }
       const missionMatch = pathname.match(/^\/api\/replicator\/mission\/(TCSM-[A-F0-9]+)(\/(capsule|approve|cancel|status|result))?$/);
       if (missionMatch) {

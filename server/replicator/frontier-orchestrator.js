@@ -22,6 +22,8 @@ const armos = require('./armos-adapter');
 const { inferenceRoutingTelemetry } = require('./model-router');
 
 const ORCHESTRATOR_MODEL = process.env.TCS_ORCHESTRATOR_MODEL || 'gpt-5.5';
+const ENGINEERING_RECOVERY_ATTEMPTS = 2;
+const ENGINEERING_RECOVERY_COOLDOWN_MS = 8000;
 
 const TOOLS = [
   { type: 'function', name: 'discover_capabilities', description: 'Discover available TC-S network capabilities (live availability check included).', parameters: { type: 'object', properties: {}, additionalProperties: false } },
@@ -69,8 +71,42 @@ async function orchestrateMission(mission, requestedNodeId) {
     },
     engineer_replication_mission: async ({ intent }) => {
       if (mission.engineering) return { note: 'Engineering already complete for this mission.', assembly_name: mission.engineering.assembly.name, parts: mission.engineering.assembly.pieces.length };
+      // A single orchestration run gets one bounded recovery attempt. The
+      // guard prevents the model from turning a failed tool call into an
+      // unbounded series of ArmOS requests.
+      if (mission.engineering_error) {
+        return { error: mission.engineering_error.message, retryable: !!mission.engineering_error.retryable, retry_suggestion: 'Retry the mission after the temporary ArmOS outage clears.' };
+      }
       mission.timeline.push({ stage: 'ENGINEERING REQUEST (ARMOS + GEMINI 3)', at: new Date().toISOString() });
-      mission.engineering = await armos.engineerMission(intent || mission.intent);
+      let engineeringError;
+      for (let attempt = 1; attempt <= ENGINEERING_RECOVERY_ATTEMPTS; attempt++) {
+        try {
+          mission.engineering = await armos.engineerMission(intent || mission.intent);
+          engineeringError = null;
+          break;
+        } catch (e) {
+          engineeringError = e;
+          if (!e.retryable || attempt === ENGINEERING_RECOVERY_ATTEMPTS) break;
+          mission.timeline.push({
+            stage: `ENGINEERING RETRY (${attempt}/${ENGINEERING_RECOVERY_ATTEMPTS}) — ARMOS TEMPORARY OUTAGE`,
+            at: new Date().toISOString()
+          });
+          mission.recovery = {
+            kind: 'ARMOS_ENGINEERING',
+            attempt,
+            max_attempts: ENGINEERING_RECOVERY_ATTEMPTS,
+            cooldown_ms: ENGINEERING_RECOVERY_COOLDOWN_MS
+          };
+          await new Promise(resolve => setTimeout(resolve, ENGINEERING_RECOVERY_COOLDOWN_MS));
+        }
+      }
+      if (engineeringError) {
+        mission.engineering_error = {
+          message: engineeringError.message,
+          retryable: !!engineeringError.retryable
+        };
+        throw engineeringError;
+      }
       return {
         assembly_name: mission.engineering.assembly.name,
         parts: mission.engineering.assembly.pieces.map(p => ({ label: p.label, color: p.color, connector: p.connector })),
@@ -125,6 +161,8 @@ async function orchestrateMission(mission, requestedNodeId) {
         const args = call.arguments ? JSON.parse(call.arguments) : {};
         result = await impl[call.name](args);
       } catch (e) {
+        if (e.retryable) mission.retryable = true;
+        mission.error = e.message;
         result = { error: e.message };
       }
       input.push({ type: 'function_call_output', call_id: call.call_id, output: JSON.stringify(result) });

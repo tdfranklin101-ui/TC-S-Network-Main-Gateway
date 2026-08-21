@@ -64,6 +64,10 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
 .tag.hold{background:rgba(251,191,36,.13);color:#fbbf24}
 .status-line{font-family:'SF Mono',Consolas,monospace;font-size:.85rem;color:#fbbf24;margin-top:1rem;min-height:1.2em}
 .err{color:#fca5a5}
+.retry-panel{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:1rem;padding:1rem;border:1px solid rgba(251,191,36,.45);border-radius:12px;background:rgba(120,53,15,.18);color:#fde68a;line-height:1.45}
+.retry-panel.hidden{display:none}
+.retry-panel strong{display:block;color:#fbbf24;margin-bottom:.2rem}
+.retry-panel .btn-retry{background:#fbbf24;color:#1c1200;white-space:nowrap}
 .cloudnine{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
 .parts-table{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.6rem}
 .parts-table th,.parts-table td{text-align:left;padding:.4rem .6rem;border-bottom:1px solid rgba(148,163,184,.12)}
@@ -98,6 +102,10 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
     </div>
     <div class="chips" id="chips"></div>
     <div class="status-line" id="statusLine"></div>
+    <div class="retry-panel hidden" id="retryPanel" role="alert">
+      <div><strong>ArmOS is temporarily busy</strong><span>Your mission is still saved. Retry the same mission when the gateway is available.</span></div>
+      <button class="btn-retry" id="btnRetry" data-testid="button-retry-mission">RETRY MISSION</button>
+    </div>
   </div>
 
   <div class="panel hidden" id="flowPanel">
@@ -166,7 +174,7 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
   const EXAMPLES=["Build a table.","Build a large six-legged red table.","Build a stool.","Build a simple storage rack.","Build a geodesic structure."];
   const STAGES=["MARKETPLACE ORDER","MISSION INTENT","OPENAI FRONTIER ORCHESTRATOR","CAPABILITY DISCOVERY","NODE DISCOVERY","ENGINEERING REQUEST (ARMOS + GEMINI 3)","CREATION CAPSULE","WAITING_APPROVAL","APPROVED","FABRICATION","SCRAMBLE","PERCEPTION","ASSEMBLY","INSPECTION","REPLICATION_COMPLETE"];
   const $=id=>document.getElementById(id);
-  let missionId=null, missionToken=null, pollTimer=null, mission=null, approvalActed=false;
+  let missionId=null, missionToken=null, pollTimer=null, mission=null, approvalActed=false, retryInFlight=false;
   const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   const chipsEl=$('chips');
@@ -393,8 +401,17 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
         return;
       }
       if(mission.status==='ORCHESTRATION_FAILED'||mission.status==='ORCHESTRATION_INCOMPLETE'){
-        setStatus('Orchestration failed: '+(mission.error||'incomplete — see timeline'),true);return;
+        if(mission.retryable){
+          $('retryPanel').classList.remove('hidden');
+          $('btnRetry').disabled=false;
+          setStatus('Mission needs a retry — the ArmOS gateway did not respond in time.',false);
+        }else{
+          $('retryPanel').classList.add('hidden');
+          setStatus('Mission could not complete — see the mission timeline for details.',true);
+        }
+        return;
       }
+      $('retryPanel').classList.add('hidden');
       if(mission.status==='CANCELLED'){setStatus('Mission cancelled.');return;}
       setStatus('Mission '+missionId+' — '+mission.status+'…');
       pollTimer=setTimeout(poll,2000);
@@ -406,6 +423,7 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
     if(intent.length<3){setStatus('Describe what to replicate first.',true);return;}
     clearTimeout(pollTimer);
     ['gatePanel','capsulePanel','resultPanel'].forEach(id=>$(id).classList.add('hidden'));
+    $('retryPanel').classList.add('hidden');
     $('btnReplicate').disabled=true;setStatus('Submitting marketplace order…');
     try{
       const body={intent};const node=$('nodeSel').value;if(node)body.node_id=node;
@@ -419,6 +437,22 @@ pre{background:#040910;border:1px solid rgba(56,189,248,.15);border-radius:10px;
       poll();
     }catch(e){setStatus(e.message,true);}
     $('btnReplicate').disabled=false;
+  };
+  $('btnRetry').onclick=async()=>{
+    if(!missionId||!missionToken||retryInFlight)return;
+    retryInFlight=true;
+    $('btnRetry').disabled=true;
+    setStatus('Retrying the same mission — waiting for ArmOS…');
+    try{
+      const r=await fetch('/api/replicator/mission/'+missionId+'/retry',{method:'POST',headers:{'X-Mission-Token':missionToken}});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(j.error||'retry request failed');
+      $('retryPanel').classList.add('hidden');
+      poll();
+    }catch(e){
+      $('btnRetry').disabled=false;
+      setStatus('Retry unavailable: '+e.message,true);
+    }finally{retryInFlight=false;}
   };
 
   $('btnApprove').onclick=async()=>{

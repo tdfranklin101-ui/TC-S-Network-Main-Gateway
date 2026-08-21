@@ -133,8 +133,17 @@ async function engineerMission(intent) {
       if (r.ok) break;
       const text = await r.text().catch(() => '');
       lastErr = new Error(`ArmOS engineering failed (${r.status}): ${text.slice(0, 200)}`);
+      lastErr.status = r.status;
+      lastErr.retryable = [408, 425, 429, 500, 502, 503, 504].includes(r.status);
     } catch (e) {
       lastErr = new Error(`ArmOS engineering unreachable: ${e.message}`);
+      lastErr.cause = e;
+      // Network failures and request timeouts are safe to retry after a
+      // cooldown; malformed responses and validation errors are not.
+      const networkCode = e.code || (e.cause && e.cause.code);
+      lastErr.retryable = e.name === 'AbortError' || e.name === 'TimeoutError' ||
+        e.name === 'TypeError' ||
+        ['ECONNRESET', 'ECONNREFUSED', 'ETIMEDOUT', 'EAI_AGAIN'].includes(networkCode);
       r = null;
     }
     if (attempt < 3) await new Promise(res => setTimeout(res, 1500 * attempt));
@@ -338,7 +347,7 @@ async function getMissionResult(mission_id) {
 
 function getMission(mission_id) { return MISSIONS.get(mission_id) || null; }
 
-function createMissionRecord(intent) {
+function createMissionRecord(intent, requestedNodeId = null) {
   // 96-bit random id (unguessable) + separate control token required for
   // state-changing operations (approve/cancel).
   const mission_id = 'TCSM-' + crypto.randomBytes(12).toString('hex').toUpperCase();
@@ -346,6 +355,7 @@ function createMissionRecord(intent) {
     mission_id,
     control_token: crypto.randomBytes(16).toString('hex'),
     intent,
+    requested_node_id: requestedNodeId,
     status: 'ORCHESTRATING',
     created_at: new Date().toISOString(),
     timeline: [{ stage: 'MARKETPLACE ORDER', at: new Date().toISOString() }, { stage: 'MISSION INTENT', at: new Date().toISOString() }],
